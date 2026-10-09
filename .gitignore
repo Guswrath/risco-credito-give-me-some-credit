@@ -1,0 +1,6 @@
+# Dados do Kaggle: as regras da competição não permitem redistribuir
+dados/
+
+# Arquivos gerados pelo Python
+__pycache__/
+*.pyc
