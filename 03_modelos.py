@@ -73,15 +73,16 @@ tabela = pd.DataFrame({
 })
 print(tabela.round(3))
 
-# Eu recomendaria a Regressão Logistica. O XGBoost foi o melhor modelo,
-# mas ele ganha por pouco, e por ser uma caixa preta não me interessa muito. 
-# Pois o regulador do banco ou o cliente pode querer saber o motivo, 
-# a regressão logistica é a rainha do credito por um motivo, caixa branca, 
-# interpretabilidade e facil de explicar o motivo para o cliente.
+# Decisão: eu recomendaria a Regressão Logística. O XGBoost foi o melhor modelo,
+# mas ganha por pouco (0,021 de Gini) e é uma caixa preta. O regulador ou o cliente
+# podem querer saber o motivo de uma negativa, e a Regressão Logística é caixa
+# branca: dá para explicar quanto cada informação pesou.
 
-# quais informações do cliente mais pesam na decisão do modelo?
+# Quais informações do cliente mais pesam na decisão do modelo?
+# Peso positivo aumenta o risco, peso negativo reduz.
 
 pesos = pd.Series(model_reg.coef_[0], index=X_train.columns)
 print(pesos.sort_values())
 
-# RevolvingUtilizationOfUnsecuredLines é a que mais aumenta o ridco: 0.657049
+# RevolvingUtilizationOfUnsecuredLines (uso do limite) é a que mais aumenta o risco: +0,657.
+# MonthlyIncome (renda) é a que mais reduz: -0,327.

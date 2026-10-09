@@ -9,32 +9,32 @@ from sklearn.preprocessing import StandardScaler
 
 df = pd.read_csv('dados/cs-training.csv')
 
-# Tratar outliers
+# Valores errados viram NaN (a linha continua na base, só a célula é apagada)
 print('Valores Faltantes:\n', df.isnull().sum())
 print('Idade < 15\n', df[~df['age'].between(15, 100)])
 df.loc[df['age'] < 15, 'age'] = np.nan
 print('Valores Faltantes:\n', df.isnull().sum())
 
-# printei entre 15 e 100, mas dei o loc apenas em quem tem menos que 15 anos pois pode ter adolecente que já trabalhe.
+# Idade: um registro com idade 0. Cortei abaixo de 15, e não de 18, porque pode haver adolescente que já trabalha.
 
 print('Valores de Number Of Time 30-59:\n', sorted(df['NumberOfTime30-59DaysPastDueNotWorse'].unique()))
 df.loc[df['NumberOfTime30-59DaysPastDueNotWorse'] >= 96, 'NumberOfTime30-59DaysPastDueNotWorse'] = np.nan
 print('Valores de Number Of Time 30-59:\n', sorted(df['NumberOfTime30-59DaysPastDueNotWorse'].unique()))
 
-# Usei a mesma logica que eu já conheço do loc, e os valores 96 e 98 sumiram, e apareceu um nan no meio que eu vou ter que tratar.
+# Atrasos: 96 e 98 são códigos do sistema, não quantidade de atrasos. Viram NaN e são imputados depois.
 
 print('Valores de Number Of Times 90:\n', sorted(df['NumberOfTimes90DaysLate'].unique()))
 df.loc[df['NumberOfTimes90DaysLate'] >= 96, 'NumberOfTimes90DaysLate'] = np.nan
 print('Valores de Number Of Times 90:\n', sorted(df['NumberOfTimes90DaysLate'].unique()))
 
-# Usei a mesma logica que eu já conheço do loc, e os valores 96 e 98 sumiram.
+# Mesma regra para as outras duas colunas de atraso.
 
 print('Number Of Time 60-89:\n',sorted(df['NumberOfTime60-89DaysPastDueNotWorse'].unique()))
 df.loc[df['NumberOfTime60-89DaysPastDueNotWorse'] >= 96, 'NumberOfTime60-89DaysPastDueNotWorse'] = np.nan
 print('Number Of Time 60-89:\n',sorted(df['NumberOfTime60-89DaysPastDueNotWorse'].unique()))
 
 
-# DebtRatio
+# Renda e DebtRatio
 
 df.loc[df['MonthlyIncome'] <= 1, 'MonthlyIncome'] = np.nan
 
@@ -42,9 +42,10 @@ df.loc[df['MonthlyIncome'] <= 1, 'MonthlyIncome'] = np.nan
 df.loc[df['MonthlyIncome'].isna(), 'DebtRatio'] = np.nan
 print('Valores Faltantes:\n', df.isnull().sum())
 
-# a condição procura quem tem a renda faltando. Se você imputar a renda primeiro, não sobra nenhuma renda faltando, 
-# a condição não encontra ninguém, e os 29.731 valores errados de DebtRatio ficam lá para sempre. A renda vazia é a única pista de quais linhas estão erradas, 
-# e imputar apaga essa pista.
+# Renda 0 e 1 foram tratadas como renda não informada.
+# Para quem não tem renda, o DebtRatio guarda o valor da dívida e não a proporção, então também vira NaN.
+# Isso precisa vir antes da imputação: a renda vazia é a única pista de quais linhas estão erradas,
+# e imputar a renda primeiro apagaria essa pista.
 
 
 print((df['RevolvingUtilizationOfUnsecuredLines'] > 1).sum())
@@ -57,7 +58,8 @@ print((df['RevolvingUtilizationOfUnsecuredLines'] > 1).sum())
 print((df['RevolvingUtilizationOfUnsecuredLines'] > 2).sum())
 print((df['RevolvingUtilizationOfUnsecuredLines'] > 10).sum())
 
-# escolhi > 10 pois ainda acha viavel ter o limite de credito usado até 2, agora 10 eu acho impossivel.
+# Uso do limite: escolhi > 10 porque usar até 200% do limite é viável (juros, tarifas), e esses clientes
+# são os de maior inadimplência. Acima de 1000% considerei erro de cadastro.
 
 print(df['MonthlyIncome'].quantile([0.01, 0.5, 0.99, 0.999]))
 print((df['MonthlyIncome'] > 100000).sum())
@@ -69,21 +71,21 @@ print(df[df['MonthlyIncome'] == 1]['DebtRatio'].median())
 
 
 
-# Separar X e y
+# Separar X e y ('Unnamed: 0' é só o número da linha)
 
 X = df.drop(columns=['SeriousDlqin2yrs', 'Unnamed: 0'])
 y = df['SeriousDlqin2yrs']
 print(X)
 print(y)
 
-# Treino e teste
+# Treino e teste (antes de qualquer fit, para não vazar informação do teste)
 
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, stratify=y, random_state=42)
 
 print(X_train.shape)
 print(X_test.shape)
 
-# imputar 
+# Imputar com a mediana: fit só no treino, transform nos dois
 
 print('Valores Faltantes:\n', df.isnull().sum())
 
@@ -96,7 +98,7 @@ print(X_train.isna().sum().sum())
 print(X_test.isna().sum().sum())
 
 
-# Scaler
+# Padronizar: fit só no treino, transform nos dois
 
 scaler = StandardScaler()
 X_train[colunas] = scaler.fit_transform(X_train[colunas])

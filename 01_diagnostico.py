@@ -19,13 +19,17 @@ print(df[df['MonthlyIncome'].isna()]['DebtRatio'].median())    # quem NÃO tem r
 print(df[df['MonthlyIncome'].notna()]['DebtRatio'].median())   # quem tem renda informada
 
 
-# Quais colunas têm valores faltando? MonthlyIncome e NumberOfDependents
-# Qual a proporção de inadimplentes? Não sei nem qual é a coluna de inadimplente, seria a SeriousDlqin2yrs?
-# Você achou algum valor estranho no describe()? (olhe as linhas min e max) Sim, RevolvingUtilizationOfUnsecuredLines tem um valor muito alto 50708.000000, coluna age tem uma idade muita alta e um NumberOfDependents muita alta com 20 
-
-
-# Não consegui ver nada no value_counts(normalize=True)
-# Achei o maximo do DebtRation muito alto, acho que é um outlier 
-# MonthlyIncome com 3 milhão é outlier tbm
-# NumberOfTimes90DaysLate tem um outiler de 98 sendo que a coluna fala que é 90 dias, NumberOfTime60-89DaysPastDueNotWorse tbm 
-# O que fazer com a coluna Unnamed? Eu droparia ela na hora de separa o X e y
+# O que o diagnóstico mostrou:
+#
+# - Target: SeriousDlqin2yrs. 6,7% de inadimplentes, base bem desbalanceada.
+# - Valores faltantes: MonthlyIncome (29.731) e NumberOfDependents (3.924).
+# - Unnamed: 0 é só o número da linha. Sai na hora de separar X e y.
+# - age tem mínimo 0.
+# - RevolvingUtilizationOfUnsecuredLines chega a 50.708, e deveria ficar perto de 0 a 1.
+# - As três colunas de atraso têm máximo 98, o que não é possível em 2 anos.
+# - DebtRatio e MonthlyIncome têm máximos muito altos (329 mil e 3 milhões).
+# - A mediana do DebtRatio é 1.159 para quem não tem renda informada e 0,29 para
+#   quem tem. Sem a renda não dá para calcular a proporção, então nessas linhas a
+#   coluna guarda o valor da dívida.
+#
+# O tratamento de cada um desses pontos está no pipeline.py.
